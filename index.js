@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 
 //Inicializar app
-console.log('Hola mundo!!');
+console.log('Empezando API');
 
 
 //Conectar a la base de datos
