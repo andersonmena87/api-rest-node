@@ -18,10 +18,20 @@ const puerto = 3900;
 app.use(cors());
 
 //Convertir body a objeto JS
-app.use(express.json());
+app.use(express.json()); //PARA RECIBIR DATOS CON Content-Type: app/json
+app.use(express.urlencoded({extended: true})); //PARA RECIBIR CON Content-Type: application/x-www-form-urlencoded (así los manda un formulario normal)
 
 
 //Crear rutas
+
+//RUTAS
+const rutas_articulo = require('./routes/articulo');
+
+//Cargo las rutas
+app.use('/api', rutas_articulo);
+
+
+//Rutas de prueba
 app.get('/probando', (req, res) => {
     console.log('Se ha ejecutado el endpoint probando');
 
