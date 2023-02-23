@@ -1,5 +1,7 @@
-const validator = require('validator');
+const fs = require('fs');
+const path = require('path');
 const Articulo = require('../models/Articulo');
+const validar = require('../helpers/validar');
 
 const prueba = (req, res) => {
 
@@ -26,15 +28,7 @@ const crear = (req, res) => {
 
     //Validar datos
     try {
-        let parametro_titulo = !validator.isEmpty(parametros.titulo) &&
-            validator.isLength(parametros.titulo, { min: 2, max: 20 });
-        let parametro_contenido = !validator.isEmpty(parametros.contenido);
-
-        console.log(validator.isLength(parametros.titulo, { min: 2, max: 20 }));
-
-        if (!parametro_titulo || !parametro_contenido) {
-            throw new Error('Error');
-        }
+        validar(parametros);
     } catch (error) {
         return res.status(400).json({
             accion: 'Error',
@@ -155,15 +149,7 @@ const editar = (req, res) => {
 
     //Validar datos
     try {
-        let parametro_titulo = !validator.isEmpty(parametros.titulo) &&
-            validator.isLength(parametros.titulo, { min: 2, max: 20 });
-        let parametro_contenido = !validator.isEmpty(parametros.contenido);
-
-        console.log(validator.isLength(parametros.titulo, { min: 2, max: 20 }));
-
-        if (!parametro_titulo || !parametro_contenido) {
-            throw new Error('Error');
-        }
+        validar(parametros);
     } catch (error) {
         return res.status(400).json({
             accion: 'Error',
@@ -174,7 +160,7 @@ const editar = (req, res) => {
     //Buscar y actualizar articulo
     //Parametros findByIdAndUpdate ({consulta o where}, parametros, {new: false},callback) -> new por defecto es false,
     //usar new: true para retornar el objeto actualizado
-    Articulo.findByIdAndUpdate(id, parametros, {new: true}, (error, ariculo_actualizado) => {
+    Articulo.findByIdAndUpdate(id, parametros, { new: true }, (error, ariculo_actualizado) => {
         if (error || !ariculo_actualizado) {
             return res.status(500).json({
                 accion: 'Error',
@@ -191,6 +177,107 @@ const editar = (req, res) => {
     })
 }
 
+const subir = (req, res) => {
+
+    if (!req.file && !req.files) {
+        return res.status(404).json({
+            accion: 'error',
+            mensaje: 'Petición invalida no se ha cargado archivo'
+        });
+    }
+
+    const { file } = req;
+
+    //Configurar multer
+
+    //Recoger el fichero de imagen
+
+    //Nombre del archivo
+    let archivo = file.originalname;
+
+    //Extension del archivo
+    let archivo_split = archivo.split('\.');
+    let extension = archivo_split[1];
+
+    //Comporbar extension correcta
+    if (extension != "png" && extension != "jpg" && extension != "jepg" && extension != "gif") {
+        //Borrar archivo y dar respuesta
+        fs.unlink(file.path, (error) => {
+            return res.status(400).json({
+                status: 'error',
+                mensaje: 'Imagen invalida'
+            });
+        });
+    } else {
+        //Actualizar articulo
+        //Recoger id articulo a editar
+        let id = req.params.id;
+
+        Articulo.findByIdAndUpdate(id, { imagen: file.filename }, { new: true }, (error, ariculo_actualizado) => {
+            if (error || !ariculo_actualizado) {
+                return res.status(500).json({
+                    accion: 'Error',
+                    mensaje: 'Error al actualizar'
+                });
+            }
+
+            //Devolver respuesta
+            return res.status(200).json({
+                accion: 'success',
+                articulo: ariculo_actualizado,
+                file,
+                archivo_split,
+                mensaje: 'Imagen de articulo actualizado con exito'
+            });
+        })
+    }
+}
+
+const imagen = (req, res) => {
+    let fichero = req.params.fichero;
+    let ruta_fisica = `./imagenes/articulos/${fichero}`;
+    fs.stat(ruta_fisica, (error, existe)=>{
+        if(existe){
+           return res.sendFile(path.resolve(ruta_fisica)); 
+        }else{
+            return res.status(404).json({
+                accion: 'error',
+                mensaje: 'La imagen no existe',
+                fichero,
+                ruta_fisica
+            });
+        }
+    });
+}
+
+const buscador = (req, res) => {
+    //Sacar el string de busqueda
+    let busqueda = req.params.busqueda;
+
+    //find OR
+    Articulo.find({ "$or": [
+        //Si el titulo incluye el string de busqueda
+        {"titulo": {"$regex": busqueda, "$options": "i"}},
+        {"contenido": {"$regex": busqueda, "$options": "i"}},
+    ]})
+    .sort({fecha: -1})
+    .exec((error, articulos_encontrados)=>{
+        if (error || !articulos_encontrados || articulos_encontrados.length === 0) {
+            return res.status(404).json({
+                accion: 'error',
+                mensaje: 'No se han encontrado articulos'
+            });
+        }
+
+        //Devolver resultado
+        return res.status(200).json({
+            status: 'success',
+            articulos: articulos_encontrados
+        })
+    }); 
+    
+}
+
 module.exports = {
     prueba,
     curso,
@@ -198,5 +285,8 @@ module.exports = {
     listar,
     uno,
     borrar,
-    editar
+    editar,
+    subir,
+    imagen,
+    buscador
 }
