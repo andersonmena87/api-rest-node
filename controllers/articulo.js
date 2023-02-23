@@ -31,7 +31,7 @@ const crear = (req, res) => {
         validar(parametros);
     } catch (error) {
         return res.status(400).json({
-            accion: 'Error',
+            status: 'error',
             mensaje: 'Faltan datos por enviar'
         });
     }
@@ -48,7 +48,7 @@ const crear = (req, res) => {
     articulo.save((error, articuloGuardado) => {
         if (error || !articuloGuardado) {
             return res.status(400).json({
-                accion: 'Error',
+                status: 'error',
                 mensaje: 'No se ha guardado el articulo'
             });
         }
@@ -79,7 +79,7 @@ const listar = (req, res) => {
 
         if (error || !articulos) {
             return res.status(400).json({
-                accion: 'Error',
+                status: 'error',
                 mensaje: 'No se han encontrado articulos'
             });
         }
@@ -102,7 +102,7 @@ const uno = (req, res) => {
         //Si no existe devolver error
         if (error || !articulo) {
             return res.status(404).json({
-                accion: 'Error',
+                status: 'error',
                 mensaje: 'No se ha encontrado el articulo'
             });
         }
@@ -126,7 +126,7 @@ const borrar = (req, res) => {
         //Si no existe devolver error
         if (error || !articulo) {
             return res.status(404).json({
-                accion: 'Error',
+                status: 'error',
                 mensaje: 'No se ha encontrado el articulo'
             });
         }
@@ -152,7 +152,7 @@ const editar = (req, res) => {
         validar(parametros);
     } catch (error) {
         return res.status(400).json({
-            accion: 'Error',
+            status: 'error',
             mensaje: 'Faltan datos por enviar'
         });
     }
@@ -163,14 +163,14 @@ const editar = (req, res) => {
     Articulo.findByIdAndUpdate(id, parametros, { new: true }, (error, ariculo_actualizado) => {
         if (error || !ariculo_actualizado) {
             return res.status(500).json({
-                accion: 'Error',
+                status: 'error',
                 mensaje: 'Error al actualizar'
             });
         }
 
         //Devolver respuesta
         return res.status(200).json({
-            accion: 'success',
+            status: 'success',
             articulo: ariculo_actualizado,
             mensaje: 'Articulo actualizado con exito'
         });
@@ -181,7 +181,7 @@ const subir = (req, res) => {
 
     if (!req.file && !req.files) {
         return res.status(404).json({
-            accion: 'error',
+            status: 'error',
             mensaje: 'Petición invalida no se ha cargado archivo'
         });
     }
@@ -216,14 +216,14 @@ const subir = (req, res) => {
         Articulo.findByIdAndUpdate(id, { imagen: file.filename }, { new: true }, (error, ariculo_actualizado) => {
             if (error || !ariculo_actualizado) {
                 return res.status(500).json({
-                    accion: 'Error',
+                    status: 'error',
                     mensaje: 'Error al actualizar'
                 });
             }
 
             //Devolver respuesta
             return res.status(200).json({
-                accion: 'success',
+                status: 'success',
                 articulo: ariculo_actualizado,
                 file,
                 archivo_split,
@@ -241,7 +241,7 @@ const imagen = (req, res) => {
            return res.sendFile(path.resolve(ruta_fisica)); 
         }else{
             return res.status(404).json({
-                accion: 'error',
+                status: 'error',
                 mensaje: 'La imagen no existe',
                 fichero,
                 ruta_fisica
@@ -264,7 +264,7 @@ const buscador = (req, res) => {
     .exec((error, articulos_encontrados)=>{
         if (error || !articulos_encontrados || articulos_encontrados.length === 0) {
             return res.status(404).json({
-                accion: 'error',
+                status: 'error',
                 mensaje: 'No se han encontrado articulos'
             });
         }
